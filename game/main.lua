@@ -1,4 +1,7 @@
 function love.load()
+    require("utils")
+    require("console")
+
     math.randomseed( os.time() )
 
     background = {R = 0.078, G = 0.078, B = 0.078, A = 1}
@@ -9,16 +12,10 @@ function love.load()
 
     love.graphics.setFont(font);
 
-    console = {}
-    console.enabled = true
-    console.offestX = 10
-    console.offestY = 10
-    console.margin = 5
-    console.lastPrint = 0
-    console.fontHeight = love.graphics.getFont():getHeight()
-    console.previousPrints = {}
-
     level = {}
+
+    level.displayed = false
+
     level.width = 5
     level.height = 5
     level.cellSize = love.graphics.getHeight() / level.height
@@ -44,19 +41,18 @@ function love.load()
     pointer.y = 0
     pointer.shown = false
 
-    gameDisplayed = false
-    menuDisplayed = true
-
     menu = {}
     menu.selected = 0
     menu.highest = 4
     menu.margin = 10
+    menu.displayed = true
 
     inputs = {}
     inputs.held = {}
-    inputs.timer = 0
     inputs.time = 0.1
     inputs.buttonTime = 0.2
+
+    initLevel()
 end
 
 function love.update(dt)
@@ -69,25 +65,21 @@ function love.update(dt)
         level.startTimer = level.startTime
     end
 
-    inputs.timer = inputs.timer + dt
-
     for i = 1, #inputs.held do
         inputs.held[i].time = inputs.held[i].time - dt
-    end
-
-    if inputs.timer > inputs.time then
-        for i = 1, #inputs.held do
-            if inputs.held[i].button == "dpup" and selected.y > 0 and inputs.held[i].time < 0 then
+        if inputs.held[i].time < 0 then
+            if inputs.held[i].button == "dpup" and selected.y > 0 then
                 selected.y = selected.y - 1
-            elseif inputs.held[i].button == "dpdown" and selected.y < level.height-1 and inputs.held[i].time < 0 then
+            elseif inputs.held[i].button == "dpdown" and selected.y < level.height-1 then
                 selected.y = selected.y + 1
-            elseif inputs.held[i].button == "dpleft" and selected.x > 0 and inputs.held[i].time < 0 then
+            elseif inputs.held[i].button == "dpleft" and selected.x > 0 then
                 selected.x = selected.x - 1
-            elseif inputs.held[i].button == "dpright" and selected.x < level.width-1 and inputs.held[i].time < 0 then
+            elseif inputs.held[i].button == "dpright" and selected.x < level.width-1 then
                 selected.x = selected.x + 1
             end
+
+            inputs.held[i].time = inputs.time
         end
-        inputs.timer = 0
     end
 end
 
@@ -96,33 +88,27 @@ function love.draw()
     love.graphics.setColor(background.R, background.G, background.B, background.A)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
-    if menuDisplayed then
+    if menu.displayed then
         love.graphics.setColor(1,1,1,1)
         love.graphics.printf("New Game", 5, 5, love.graphics.getWidth())
 
         spacing = 20
 
         love.graphics.printf("Width: " .. level.width, 0, (love.graphics.getHeight()/3) + font:getHeight(), love.graphics.getWidth(), "center")
-
         love.graphics.printf("Height: " .. level.height, 0, (love.graphics.getHeight()/3) + spacing * 2 + font:getHeight(), love.graphics.getWidth(), "center")
-
         love.graphics.printf("Locked tiles: " .. level.lockedAmmount, 0, (love.graphics.getHeight()/3) + spacing*4 + font:getHeight(), love.graphics.getWidth(), "center")
-
         love.graphics.printf("Play", 0, (love.graphics.getHeight()/3) + spacing*6 + font:getHeight(), love.graphics.getWidth(), "center")
-
         love.graphics.printf("Quit", 0, (love.graphics.getHeight()/3) + spacing*8 + font:getHeight(), love.graphics.getWidth(), "center")
 
         love.graphics.setFont(smallFont)
-
         love.graphics.print("press + to return to the menu, and press - to generate a new level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
-        
         love.graphics.setFont(font)
 
         --slector
         love.graphics.circle("line", love.graphics.getWidth() / 2 - 100, (love.graphics.getHeight()/3) + font:getHeight() + spacing * 2 * menu.selected + font:getHeight()/2, 5)
     end
 
-    if gameDisplayed then
+    if level.displayed then
         --drawing level
         drawLevel()
 
@@ -154,15 +140,15 @@ function love.draw()
 
     --Display Console Messages
     if console.enabled then
-        displayLogs()
+        console.displayLogs()
     end
 end
 
 function love.gamepadpressed(joystick, button)
-    if gameDisplayed then
+    if level.displayed then
         if level.completed and level.completedTimer > level.completedTime then
-            gameDisplayed = false
-            menuDisplayed = true
+            level.displayed = false
+            menu.displayed = true
 
             menu.selected = 0
 
@@ -209,7 +195,7 @@ function love.gamepadpressed(joystick, button)
 
     end
 
-    if menuDisplayed then
+    if menu.displayed then
         if button == "dpup" and menu.selected > 0 then
             menu.selected = menu.selected - 1
         elseif button == "dpdown" and menu.selected < menu.highest then
@@ -222,8 +208,8 @@ function love.gamepadpressed(joystick, button)
             elseif menu.selected == 2 then
                 level.lockedAmmount = level.lockedAmmount + 1
             elseif menu.selected == 3 then
-                gameDisplayed = true
-                menuDisplayed = false
+                level.displayed = true
+                menu.displayed = false
 
                 initLevel()
             elseif menu.selected == 4 then
@@ -237,8 +223,8 @@ function love.gamepadpressed(joystick, button)
             elseif menu.selected == 2 then
                 level.lockedAmmount = level.lockedAmmount - 1
             elseif menu.selected == 3 then
-                gameDisplayed = true
-                menuDisplayed = false
+                level.displayed = true
+                menu.displayed = false
 
                 initLevel()
             elseif menu.selected == 4 then
@@ -248,8 +234,8 @@ function love.gamepadpressed(joystick, button)
     end
 
     if button == "start" then
-        gameDisplayed = false
-        menuDisplayed = true
+        level.displayed = false
+        menu.displayed = true
     end
     if button == "back" then
         console.enabled = not console.enabled
@@ -257,7 +243,7 @@ function love.gamepadpressed(joystick, button)
 end
 
 function love.gamepadreleased(joystick, button)
-    if gameDisplayed and button then
+    if level.displayed and button then
         for i = 1, #inputs.held do
             if inputs.held[i] ~= nil and inputs.held[i].button ~= nil and inputs.held[i].button == button then
                 table.remove(inputs.held, i)
@@ -414,115 +400,3 @@ function drawCenteredRect(displayType, x,y,width,height)
     love.graphics.rectangle(displayType, x+width/2, y+height/2, width, height)
 end
 
--- Console Funcs
-function log(message)
-    table.insert(console.previousPrints, tostring(message))
-    print(tostring(message))
-end
-
-function displayLogs()
-    console.lastPrint = 0
-    for i=1, #console.previousPrints do
-        love.graphics.print(console.previousPrints[i], console.offestX, console.offestY + console.lastPrint)
-        console.lastPrint = console.lastPrint + console.fontHeight + console.margin
-        if (console.lastPrint > love.graphics.getHeight()) then
-            console.previousPrints = {}
-            console.lastPrint = 0
-        end
-    end
-end
-
---utils
-function dump(o)
-    if type(o) == 'table' then
-       local s = '{ '
-       for k,v in pairs(o) do
-          if type(k) ~= 'number' then k = '"'..k..'"' end
-          s = s .. '['..k..'] = ' .. dump(v) .. ','
-       end
-       return s .. '} \n'
-    else
-       return tostring(o)
-    end
- end
-
- function shuffle(x)
-	for i = #x, 2, -1 do
-		local j = math.random(i)
-		x[i], x[j] = x[j], x[i]
-	end
-end
-
-function table.clone(orig, copies)
-    copies = copies or {}
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        if copies[orig] then
-            copy = copies[orig]
-        else
-            copy = {}
-            copies[orig] = copy
-            for orig_key, orig_value in next, orig, nil do
-                copy[table.clone(orig_key, copies)] = table.clone(orig_value, copies)
-            end
-            setmetatable(copy, table.clone(getmetatable(orig), copies))
-        end
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
-function table.equals(o1, o2, ignore_mt)
-    if o1 == o2 then return true end
-    local o1Type = type(o1)
-    local o2Type = type(o2)
-    if o1Type ~= o2Type then return false end
-    if o1Type ~= 'table' then return false end
-
-    if not ignore_mt then
-        local mt1 = getmetatable(o1)
-        if mt1 and mt1.__eq then
-            --compare using built in method
-            return o1 == o2
-        end
-    end
-
-    local keySet = {}
-
-    for key1, value1 in pairs(o1) do
-        local value2 = o2[key1]
-        if value2 == nil or table.equals(value1, value2, ignore_mt) == false then
-            return false
-        end
-        keySet[key1] = true
-    end
-
-    for key2, _ in pairs(o2) do
-        if not keySet[key2] then return false end
-    end
-    return true
-end
-
-function HSV(h, s, v)
-    if s <= 0 then return v,v,v end
-    h = h*6
-    local c = v*s
-    local x = (1-math.abs((h%2)-1))*c
-    local m,r,g,b = (v-c), 0, 0, 0
-    if h < 1 then
-        r, g, b = c, x, 0
-    elseif h < 2 then
-        r, g, b = x, c, 0
-    elseif h < 3 then
-        r, g, b = 0, c, x
-    elseif h < 4 then
-        r, g, b = 0, x, c
-    elseif h < 5 then
-        r, g, b = x, 0, c
-    else
-        r, g, b = c, 0, x
-    end
-    return r+m, g+m, b+m
-end
