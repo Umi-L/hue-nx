@@ -30,7 +30,7 @@ function love.load()
     level.completedTime = 2
 
     level.startTimer = 0
-    level.startTime = 0.4
+    level.startTime = 0.6
 
     selected = {}
     selected.x = 0
@@ -81,6 +81,11 @@ function love.update(dt)
             inputs.held[i].time = inputs.time
         end
     end
+
+
+    if love.keyboard.isDown( "x" ) then
+        initLevel()
+    end
 end
 
 function love.draw()
@@ -101,7 +106,7 @@ function love.draw()
         love.graphics.printf("Quit", 0, (love.graphics.getHeight()/3) + spacing*8 + font:getHeight(), love.graphics.getWidth(), "center")
 
         love.graphics.setFont(smallFont)
-        love.graphics.print("press + to return to the menu, and press - to generate a new level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
+        love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
         love.graphics.setFont(font)
 
         --slector
@@ -144,6 +149,7 @@ function love.draw()
     end
 end
 
+
 function love.gamepadpressed(joystick, button)
     if level.displayed then
         if level.completed and level.completedTimer > level.completedTime then
@@ -171,7 +177,7 @@ function love.gamepadpressed(joystick, button)
             initLevel()
         elseif button == "a" or button == "b" then
             if pointer.shown then
-                if not lockedTilesContains(selected.x, selected.y) then
+                if not isLockedTile(selected.x, selected.y) then
                     
                     point = level.grid[selected.x+1][selected.y+1]
 
@@ -184,7 +190,7 @@ function love.gamepadpressed(joystick, button)
                     checkSolution()
                 end
             else
-                if not lockedTilesContains(selected.x, selected.y) then
+                if not isLockedTile(selected.x, selected.y) then
                     pointer.shown = true
 
                     pointer.x = selected.x
@@ -261,8 +267,8 @@ function drawLevel()
             love.graphics.setColor(cell.R,cell.G,cell.B,cell.A)
             drawCenteredRect(
                 "fill", 
-                x*level.cellSize - level.cellSize / 2 + level.xOffset, 
-                y*level.cellSize - level.cellSize / 2, 
+                x*level.cellSize + level.cellSize / 2 + level.xOffset, 
+                y*level.cellSize + level.cellSize / 2, 
                 level.cellSize * (level.startTimer/level.startTime), 
                 level.cellSize * (level.startTimer/level.startTime)
             )
@@ -273,9 +279,9 @@ end
 function drawLockDots()
     love.graphics.setColor(0,0,0,1)
     for i = 1, #level.lockedTiles do
-        love.graphics.circle("fill", level.lockedTiles[i].x*level.cellSize + level.xOffset + level.cellSize/2  * (level.startTimer/level.startTime), 
-        level.lockedTiles[i].y * level.cellSize + level.cellSize/2  * (level.startTimer/level.startTime), 
-        5)
+        love.graphics.circle("fill", level.lockedTiles[i].x*level.cellSize + level.xOffset + level.cellSize/2, 
+        level.lockedTiles[i].y * level.cellSize + level.cellSize/2, 
+        6)
     end
 end
 
@@ -284,7 +290,7 @@ function genorateLockedTile()
     randY = math.random(0, level.height-1)
 
     --check if tile is already locked
-    valid = not lockedTilesContains(randX, randY)
+    valid = not isLockedTile(randX, randY)
 
     if valid then
         table.insert(level.lockedTiles, {x=randX, y=randY})
@@ -293,7 +299,7 @@ function genorateLockedTile()
     end
 end
 
-function lockedTilesContains(x, y)
+function isLockedTile(x, y)
     contains = false
     for v = 1, #level.lockedTiles do
         if level.lockedTiles[v].x == x and level.lockedTiles[v].y == y then
@@ -336,15 +342,13 @@ function initLevel()
     pointer.y = 0
     pointer.shown = false
 
-    --Result = (color2 - color1) * fraction + color1
-    color1 = {R = math.random(), G = math.random(), B = math.random()}
-    color2 = {R = math.random(), G = math.random(), B = math.random()}
+
+    color1 = HSV(math.random(),math.random()+0.3,math.random()+0.2)
+    color2 = HSV(math.random(),math.random()+0.3,math.random()+0.05)
 
     difference = (color1.R - color2.R)^2 + (color1.G - color2.G)^2 + (color1.B - color2.B)^2
 
-    offset = {X=math.random(0,5), Y=math.random(0,5)}
-
-    if difference < 0.2 then
+    if math.abs(difference) < 0.2 then
         initLevel()
         return
     end
@@ -354,9 +358,9 @@ function initLevel()
         temp = {}
         for y = 0, level.height-1 do
             table.insert(temp, {
-                R = (color1.R - color2.R) * ((x / level.width + y / level.height)/2) + color1.R,
-                G = (color1.G - color2.G) * ((x / level.width + y / level.height)/2) + color1.G, 
-                B = (color1.B - color2.B) * ((x / level.width + y / level.height)/2) + color1.B, 
+                R = (color1.R - color2.R) * ((x / level.width + y / level.height)) + color1.R,
+                G = (color1.G - color2.G) * ((x / level.width + y / level.height)) + color1.G, 
+                B = (color1.B - color2.B) * ((x / level.width + y / level.height)) + color1.B, 
             })
         end
         table.insert(level.grid, temp)
@@ -378,7 +382,7 @@ function initLevel()
                 randY = math.random(1, level.height)
 
                 --check if locked
-                valid = not (lockedTilesContains(randX-1, randY-1) or lockedTilesContains(x-1, y-1))
+                valid = not (isLockedTile(randX-1, randY-1) or isLockedTile(x-1, y-1))
 
                 if valid then
                     --swap the tiles
@@ -397,6 +401,5 @@ function initLevel()
 end
 
 function drawCenteredRect(displayType, x,y,width,height)
-    love.graphics.rectangle(displayType, x+width/2, y+height/2, width, height)
+    love.graphics.rectangle(displayType, x-width/2, y-height/2, width, height)
 end
-
