@@ -72,7 +72,7 @@ function table.equals(o1, o2, ignore_mt)
 end
 
 function HSV(h, s, v)
-    if s <= 0 then return v,v,v end
+    if s <= 0 then return {R=v,G=v,B=v} end
     h = h*6 
     local c = v*s
     local x = (1-math.abs((h%2)-1))*c
@@ -93,7 +93,12 @@ function HSV(h, s, v)
     return {R=r+m, G=g+m, B=b+m}
 end
 
-local function RGBtoHSL(r, g, b)
+function RGBtoHSL(color)
+
+    r = color.R
+    g = color.G
+    b = color.B
+
     r, g, b    = r/255, g/255, b/255
 	local M, m =  math.max(r, g, b),
 				  math.min(r, g, b)
@@ -103,7 +108,12 @@ local function RGBtoHSL(r, g, b)
 	elseif M == b then H = (r-g)/c+4
 	end	local L = 0.5*M+0.5*m
 	local S = c == 0 and 0 or c/(1-math.abs(2*L-1))
-	return ((1/6)*H)*360%360, S*255, L*255
+
+    H = ((1/6)*H)*360%360
+    S = S*255
+    V = L*255
+
+	return {H=H,S=S,L=L}
 end
 
 function percentBetween(a,b,percent)

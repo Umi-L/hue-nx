@@ -1,6 +1,7 @@
 function love.load()
     require("utils")
     require("console")
+    require("menu")
 
     math.randomseed( os.time() )
 
@@ -14,14 +15,14 @@ function love.load()
 
     level = {}
 
-    level.displayed = true
+    level.displayed = false
 
     level.width = 5
     level.height = 5
     level.cellSize = love.graphics.getHeight() / level.height
     level.xOffset = (love.graphics.getWidth() / 2) - (level.width/2 * level.cellSize)
     level.grid = {}
-    level.lockedAmmount = 15
+    level.lockedAmmount = 25
     level.shuffleItterations = 2
     level.lockedTiles = {}
     level.solution = {}
@@ -41,12 +42,6 @@ function love.load()
     pointer.y = 0
     pointer.shown = false
 
-    menu = {}
-    menu.selected = 0
-    menu.highest = 4
-    menu.margin = 10
-    menu.displayed = false
-
     inputs = {}
     inputs.held = {}
     inputs.time = 0.1
@@ -56,6 +51,9 @@ function love.load()
 end
 
 function love.update(dt)
+
+    menu.upadeMenu(dt)
+
     if level.completed then
         level.completedTimer = level.completedTimer + dt
     end
@@ -94,23 +92,24 @@ function love.draw()
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
 
     if menu.displayed then
-        love.graphics.setColor(1,1,1,1)
-        love.graphics.printf("New Game", 5, 5, love.graphics.getWidth())
+        menu.drawMenu()
+        -- love.graphics.setColor(1,1,1,1)
+        -- love.graphics.printf("New Game", 5, 5, love.graphics.getWidth())
 
-        spacing = 20
+        -- spacing = 20
 
-        love.graphics.printf("Width: " .. level.width, 0, (love.graphics.getHeight()/3) + font:getHeight(), love.graphics.getWidth(), "center")
-        love.graphics.printf("Height: " .. level.height, 0, (love.graphics.getHeight()/3) + spacing * 2 + font:getHeight(), love.graphics.getWidth(), "center")
-        love.graphics.printf("Locked tiles: " .. level.lockedAmmount, 0, (love.graphics.getHeight()/3) + spacing*4 + font:getHeight(), love.graphics.getWidth(), "center")
-        love.graphics.printf("Play", 0, (love.graphics.getHeight()/3) + spacing*6 + font:getHeight(), love.graphics.getWidth(), "center")
-        love.graphics.printf("Quit", 0, (love.graphics.getHeight()/3) + spacing*8 + font:getHeight(), love.graphics.getWidth(), "center")
+        -- love.graphics.printf("Width: " .. level.width, 0, (love.graphics.getHeight()/3) + font:getHeight(), love.graphics.getWidth(), "center")
+        -- love.graphics.printf("Height: " .. level.height, 0, (love.graphics.getHeight()/3) + spacing * 2 + font:getHeight(), love.graphics.getWidth(), "center")
+        -- love.graphics.printf("Locked tiles: " .. level.lockedAmmount, 0, (love.graphics.getHeight()/3) + spacing*4 + font:getHeight(), love.graphics.getWidth(), "center")
+        -- love.graphics.printf("Play", 0, (love.graphics.getHeight()/3) + spacing*6 + font:getHeight(), love.graphics.getWidth(), "center")
+        -- love.graphics.printf("Quit", 0, (love.graphics.getHeight()/3) + spacing*8 + font:getHeight(), love.graphics.getWidth(), "center")
 
-        love.graphics.setFont(smallFont)
-        love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
-        love.graphics.setFont(font)
+        -- love.graphics.setFont(smallFont)
+        -- love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
+        -- love.graphics.setFont(font)
 
-        --slector
-        love.graphics.circle("line", love.graphics.getWidth() / 2 - 100, (love.graphics.getHeight()/3) + font:getHeight() + spacing * 2 * menu.selected + font:getHeight()/2, 5)
+        -- --slector
+        -- love.graphics.circle("line", love.graphics.getWidth() / 2 - 100, (love.graphics.getHeight()/3) + font:getHeight() + spacing * 2 * menu.selected + font:getHeight()/2, 5)
     end
 
     if level.displayed then
@@ -358,10 +357,10 @@ function initLevel()
     bottomRightHue = math.random()
 
     colors = {}
-    colors.topLeft = HSV(topLeftHue, 1, 1)
-    colors.topRight = HSV(topRightHue, 1, 1)
-    colors.bottomLeft = HSV(bottomLeftHue, 1, 1)
-    colors.bottomRight = HSV(topRightHue, 1, 1)
+    colors.topLeft = HSV(topLeftHue, math.random(), 1)
+    colors.topRight = HSV(topRightHue, math.random(), 1)
+    colors.bottomLeft = HSV(bottomLeftHue, math.random(), 1)
+    colors.bottomRight = HSV(topRightHue, math.random(), 1)
 
     --genorate level
     for x = 0, level.width-1 do
