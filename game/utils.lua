@@ -73,7 +73,7 @@ end
 
 function HSV(h, s, v)
     if s <= 0 then return v,v,v end
-    h = h*6
+    h = h*6 
     local c = v*s
     local x = (1-math.abs((h%2)-1))*c
     local m,r,g,b = (v-c), 0, 0, 0
@@ -91,4 +91,33 @@ function HSV(h, s, v)
         r, g, b = c, 0, x
     end
     return {R=r+m, G=g+m, B=b+m}
+end
+
+local function RGBtoHSL(r, g, b)
+    r, g, b    = r/255, g/255, b/255
+	local M, m =  math.max(r, g, b),
+				  math.min(r, g, b)
+	local c, H = M - m, 0
+	if     M == r then H = (g-b)/c%6
+	elseif M == g then H = (b-r)/c+2
+	elseif M == b then H = (r-g)/c+4
+	end	local L = 0.5*M+0.5*m
+	local S = c == 0 and 0 or c/(1-math.abs(2*L-1))
+	return ((1/6)*H)*360%360, S*255, L*255
+end
+
+function percentBetween(a,b,percent)
+    return a + (b - a) * percent
+end
+
+function interpolateColor(a,b,percent)
+    r = percentBetween(a.R,b.R, percent)
+    g = percentBetween(a.G,b.G, percent)
+    b = percentBetween(a.B,b.B, percent)
+
+    return {R=r,G=g,B=b}
+end
+
+function newColor(r,g,b)
+    return {R=r,G=g,B=b}
 end

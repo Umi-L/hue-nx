@@ -342,26 +342,50 @@ function initLevel()
     pointer.y = 0
     pointer.shown = false
 
+    circlePos = math.random()
+    circlePos2 = circlePos + 0.5
 
-    color1 = HSV(math.random(),math.random()+0.3,math.random()+0.2)
-    color2 = HSV(math.random(),math.random()+0.3,math.random()+0.05)
-
-    difference = (color1.R - color2.R)^2 + (color1.G - color2.G)^2 + (color1.B - color2.B)^2
-
-    if math.abs(difference) < 0.2 then
-        initLevel()
-        return
+    if circlePos2 > 1 then
+        circlePos2 = circlePos2 - 1
     end
+
+    color1 = HSV(circlePos,0.8,1)
+    color2 = HSV(circlePos2,1,0.5)
 
     --genorate level
     for x = 0, level.width-1 do
         temp = {}
         for y = 0, level.height-1 do
-            table.insert(temp, {
-                R = (color1.R - color2.R) * ((x / level.width + y / level.height)) + color1.R,
-                G = (color1.G - color2.G) * ((x / level.width + y / level.height)) + color1.G, 
-                B = (color1.B - color2.B) * ((x / level.width + y / level.height)) + color1.B, 
-            })
+
+            xPercent = x/level.width
+            yPercent = y/level.height
+
+            topLeftHue = math.random(0,12)/12
+            topRightHue = math.random(0,12)/12 + 0.25
+
+            bottomLeftHue = topRightHue + 0.5
+            bottomRightHue = topLeftHue + 0.5
+
+            if bottomLeftHue > 1 then
+                bottemLeftHue = bottomLeftHue - 1
+            end
+            if bottomRightHue > 1 then
+                bottomRightHue = bottomRightHue - 1
+            end
+
+            colors = {}
+            colors.topLeft = HSV(topLeftHue, 1, 1)
+            colors.topRight = HSV(topRightHue, 1, 1)
+            colors.bottomLeft = HSV(bottomLeftHue, 1, 1)
+            colors.bottomRight = HSV(topRightHue, 1, 1)
+
+            
+            --biliniar interpolation
+            topColor = interpolateColor(colors.topLeft, colors.topRight, xPercent)
+            bottomColor = interpolateColor(colors.bottomLeft, colors.bottomRight, xPercent)
+            color = interpolateColor(topColor, bottomColor, yPercent)
+
+            table.insert(temp, color)
         end
         table.insert(level.grid, temp)
     end
@@ -395,7 +419,7 @@ function initLevel()
         end
     end
 
-    if table.equals(level.grid, level.solution) then
+    if table.equals(level.grid, level.solution) and not level.completed then
         initLevel()
     end
 end
