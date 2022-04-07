@@ -14,7 +14,7 @@ function love.load()
 
     level = {}
 
-    level.displayed = false
+    level.displayed = true
 
     level.width = 5
     level.height = 5
@@ -45,7 +45,7 @@ function love.load()
     menu.selected = 0
     menu.highest = 4
     menu.margin = 10
-    menu.displayed = true
+    menu.displayed = false
 
     inputs = {}
     inputs.held = {}
@@ -352,6 +352,17 @@ function initLevel()
     color1 = HSV(circlePos,0.8,1)
     color2 = HSV(circlePos2,1,0.5)
 
+    topLeftHue = math.random()
+    topRightHue = math.random()
+    bottomLeftHue = math.random()
+    bottomRightHue = math.random()
+
+    colors = {}
+    colors.topLeft = HSV(topLeftHue, 1, 1)
+    colors.topRight = HSV(topRightHue, 1, 1)
+    colors.bottomLeft = HSV(bottomLeftHue, 1, 1)
+    colors.bottomRight = HSV(topRightHue, 1, 1)
+
     --genorate level
     for x = 0, level.width-1 do
         temp = {}
@@ -360,24 +371,7 @@ function initLevel()
             xPercent = x/level.width
             yPercent = y/level.height
 
-            topLeftHue = math.random(0,12)/12
-            topRightHue = math.random(0,12)/12 + 0.25
-
-            bottomLeftHue = topRightHue + 0.5
-            bottomRightHue = topLeftHue + 0.5
-
-            if bottomLeftHue > 1 then
-                bottemLeftHue = bottomLeftHue - 1
-            end
-            if bottomRightHue > 1 then
-                bottomRightHue = bottomRightHue - 1
-            end
-
-            colors = {}
-            colors.topLeft = HSV(topLeftHue, 1, 1)
-            colors.topRight = HSV(topRightHue, 1, 1)
-            colors.bottomLeft = HSV(bottomLeftHue, 1, 1)
-            colors.bottomRight = HSV(topRightHue, 1, 1)
+            
 
             
             --biliniar interpolation
