@@ -32,7 +32,7 @@ version = "0.1.0"
 clean = false
 targets = ["switch"]
 source = "game"
-icon = "favicon"
+icon = "icon"
 binSearchPath = ""
 
 ## --- Output Options --- ##

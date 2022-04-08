@@ -17,13 +17,13 @@ function love.load()
 
     level.displayed = false
 
-    level.width = 5
+    level.width = 9
     level.height = 5
     level.cellSize = love.graphics.getHeight() / level.height
     level.xOffset = (love.graphics.getWidth() / 2) - (level.width/2 * level.cellSize)
     level.grid = {}
-    level.lockedAmmount = 25
-    level.shuffleItterations = 2
+    level.lockedAmmount = 15
+    level.shuffleItterations = 5
     level.lockedTiles = {}
     level.solution = {}
     level.completed = false
@@ -36,6 +36,7 @@ function love.load()
     selected = {}
     selected.x = 0
     selected.y = 0
+    selected.shown = true
 
     pointer = {}
     pointer.x = 0
@@ -46,6 +47,8 @@ function love.load()
     inputs.held = {}
     inputs.time = 0.1
     inputs.buttonTime = 0.2
+
+    touches = {}
 
     initLevel()
 end
@@ -79,10 +82,72 @@ function love.update(dt)
             inputs.held[i].time = inputs.time
         end
     end
+end
+
+function love.touchpressed( id, x, y, dx, dy, pressure )
+    if menu.displayed then
+        if menu.startShown then
+            menu.startShown = false
+            menu.coustomShown= true
+        end
+    elseif level.displayed then
+
+        selected.shown = false
+
+        if level.completed and level.completedTimer > level.completedTime / 2 then
+            level.displayed = false
+            menu.displayed = true
+
+            menu.selected = 0
+
+            return
+        end
+
+        tileX = math.floor((x-level.xOffset)/level.cellSize) + 1
+        tileY = math.floor(y/level.cellSize) + 1
+
+        if tileX <= level.width and tileX > 0 and tileY <= level.height and tileY > 0 and level.displayed == true then
+            if not isLockedTile(tileX-1, tileY-1) then
+                touches[id] = {x=tileX, y=tileY, id=id}
+
+                touchedTile = level.grid[tileX][tileY]
+
+                level.grid[tileX][tileY].visible = false
+            end
+        end
+    end
+end
+
+function love.touchreleased( id, x, y, dx, dy, pressure )
+
+    if touches[id] ~= nil then
+        firstTileX = touches[id].x
+        firstTileY = touches[id].y
+
+        secondTileX = math.floor((x-level.xOffset)/level.cellSize) + 1
+        secondTileY = math.floor(y/level.cellSize) + 1
+
+        if secondTileX <= level.width and secondTileX > 0 and secondTileY <= level.height and secondTileY > 0 and level.displayed == true then
+            firstTile = level.grid[firstTileX][firstTileY]
+            secondTile = level.grid[secondTileX][secondTileY]
+
+            if not isLockedTile(secondTileX-1, secondTileY-1) then
+                
+                level.grid[firstTileX][firstTileY].visible = true
+
+                point = level.grid[firstTileX][firstTileY]
+
+                level.grid[firstTileX][firstTileY] = level.grid[secondTileX][secondTileY]
+
+                level.grid[secondTileX][secondTileY] = point
+
+                checkSolution()
+            end
+        end
+        level.grid[firstTileX][firstTileY].visible = true
+        touches[id] = nil
 
 
-    if love.keyboard.isDown( "x" ) then
-        initLevel()
     end
 end
 
@@ -93,23 +158,6 @@ function love.draw()
 
     if menu.displayed then
         menu.drawMenu()
-        -- love.graphics.setColor(1,1,1,1)
-        -- love.graphics.printf("New Game", 5, 5, love.graphics.getWidth())
-
-        -- spacing = 20
-
-        -- love.graphics.printf("Width: " .. level.width, 0, (love.graphics.getHeight()/3) + font:getHeight(), love.graphics.getWidth(), "center")
-        -- love.graphics.printf("Height: " .. level.height, 0, (love.graphics.getHeight()/3) + spacing * 2 + font:getHeight(), love.graphics.getWidth(), "center")
-        -- love.graphics.printf("Locked tiles: " .. level.lockedAmmount, 0, (love.graphics.getHeight()/3) + spacing*4 + font:getHeight(), love.graphics.getWidth(), "center")
-        -- love.graphics.printf("Play", 0, (love.graphics.getHeight()/3) + spacing*6 + font:getHeight(), love.graphics.getWidth(), "center")
-        -- love.graphics.printf("Quit", 0, (love.graphics.getHeight()/3) + spacing*8 + font:getHeight(), love.graphics.getWidth(), "center")
-
-        -- love.graphics.setFont(smallFont)
-        -- love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
-        -- love.graphics.setFont(font)
-
-        -- --slector
-        -- love.graphics.circle("line", love.graphics.getWidth() / 2 - 100, (love.graphics.getHeight()/3) + font:getHeight() + spacing * 2 * menu.selected + font:getHeight()/2, 5)
     end
 
     if level.displayed then
@@ -118,12 +166,23 @@ function love.draw()
 
         drawLockDots()
 
+        for k, v in pairs(touches) do
+            x, y = love.touch.getPosition( touches[k].id )
+
+            color = level.grid[touches[k].x][touches[k].y]
+
+            love.graphics.setColor(color.R,color.G,color.B, 1)
+            drawCenteredRect("fill", x, y, level.cellSize, level.cellSize)
+        end
+
         --drawing selector
-        love.graphics.setColor(1,1,1,0.5)
-        love.graphics.rectangle("line", selected.x*level.cellSize + level.xOffset, selected.y*level.cellSize, level.cellSize, level.cellSize)
+        if selected.shown then
+            love.graphics.setColor(1,1,1,0.5)
+            love.graphics.rectangle("line", selected.x*level.cellSize + level.xOffset, selected.y*level.cellSize, level.cellSize, level.cellSize)
+        end
 
         --drawing pointer
-        if pointer.shown then
+        if pointer.shown and selected.shown then
             love.graphics.setColor(1,0,0,0.5)
             love.graphics.rectangle("line", pointer.x*level.cellSize + level.xOffset, pointer.y*level.cellSize, level.cellSize, level.cellSize)
         end
@@ -151,7 +210,7 @@ end
 
 function love.gamepadpressed(joystick, button)
     if level.displayed then
-        if level.completed and level.completedTimer > level.completedTime then
+        if level.completed and level.completedTimer > level.completedTime / 2 then
             level.displayed = false
             menu.displayed = true
 
@@ -159,6 +218,8 @@ function love.gamepadpressed(joystick, button)
 
             return
         end
+
+        selected.shown = true
 
         if button == "dpup" and selected.y > 0 then
             selected.y = selected.y - 1
@@ -201,39 +262,50 @@ function love.gamepadpressed(joystick, button)
     end
 
     if menu.displayed then
-        if button == "dpup" and menu.selected > 0 then
-            menu.selected = menu.selected - 1
-        elseif button == "dpdown" and menu.selected < menu.highest then
-            menu.selected = menu.selected + 1
-        elseif button == "dpright" or button == "a"then
-            if menu.selected == 0 then
-                level.width = level.width + 1
-            elseif menu.selected == 1 then
-                level.height = level.height + 1
-            elseif menu.selected == 2 then
-                level.lockedAmmount = level.lockedAmmount + 1
-            elseif menu.selected == 3 then
-                level.displayed = true
-                menu.displayed = false
-
-                initLevel()
-            elseif menu.selected == 4 then
+        if menu.startShown then
+            if button == "start" then
                 love.event.quit()
+            else
+                menu.startShown = false
+                menu.coustomShown= true
             end
-        elseif button == "dpleft" or button == "b" then
-            if menu.selected == 0 then
-                level.width = level.width - 1
-            elseif menu.selected == 1 then
-                level.height = level.height - 1
-            elseif menu.selected == 2 then
-                level.lockedAmmount = level.lockedAmmount - 1
-            elseif menu.selected == 3 then
-                level.displayed = true
-                menu.displayed = false
+        else
+            if button == "dpup" and menu.selected > 0 then
+                menu.selected = menu.selected - 1
+            elseif button == "dpdown" and menu.selected < menu.highest then
+                menu.selected = menu.selected + 1
+            elseif button == "dpright" or button == "a"then
+                if menu.selected == 0 then
+                    level.width = level.width + 1
+                elseif menu.selected == 1 then
+                    level.height = level.height + 1
+                elseif menu.selected == 2 then
+                    level.lockedAmmount = level.lockedAmmount + 1
+                elseif menu.selected == 3 then
+                    level.displayed = true
+                    menu.displayed = false
 
-                initLevel()
-            elseif menu.selected == 4 then
-                love.event.quit()
+                    initLevel()
+                elseif menu.selected == 4 then
+                    menu.coustomShown = false
+                    menu.startShown = true
+                end
+            elseif button == "dpleft" or button == "b" then
+                if menu.selected == 0 then
+                    level.width = level.width - 1
+                elseif menu.selected == 1 then
+                    level.height = level.height - 1
+                elseif menu.selected == 2 then
+                    level.lockedAmmount = level.lockedAmmount - 1
+                elseif menu.selected == 3 then
+                    level.displayed = true
+                    menu.displayed = false
+
+                    initLevel()
+                elseif menu.selected == 4 then
+                    menu.coustomShown = false
+                    menu.startShown = true
+                end
             end
         end
     end
@@ -262,15 +334,16 @@ function drawLevel()
     for x = 0, level.width-1 do
         for y = 0, level.height-1 do
             cell = level.grid[x+1][y+1]
-
-            love.graphics.setColor(cell.R,cell.G,cell.B,cell.A)
-            drawCenteredRect(
-                "fill", 
-                x*level.cellSize + level.cellSize / 2 + level.xOffset, 
-                y*level.cellSize + level.cellSize / 2, 
-                level.cellSize * (level.startTimer/level.startTime), 
-                level.cellSize * (level.startTimer/level.startTime)
-            )
+            if cell.visible then
+                love.graphics.setColor(cell.R,cell.G,cell.B,cell.A)
+                drawCenteredRect(
+                    "fill", 
+                    x*level.cellSize + level.cellSize / 2 + level.xOffset, 
+                    y*level.cellSize + level.cellSize / 2, 
+                    level.cellSize * (level.startTimer/level.startTime), 
+                    level.cellSize * (level.startTimer/level.startTime)
+                )
+            end
         end
     end
 end
@@ -377,6 +450,8 @@ function initLevel()
             topColor = interpolateColor(colors.topLeft, colors.topRight, xPercent)
             bottomColor = interpolateColor(colors.bottomLeft, colors.bottomRight, xPercent)
             color = interpolateColor(topColor, bottomColor, yPercent)
+
+            color.visible = true
 
             table.insert(temp, color)
         end

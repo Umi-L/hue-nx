@@ -10,18 +10,15 @@ menu.tileHight = 5
 menu.tileSize = love.graphics.getHeight() / menu.tileHight
 menu.tileWidth = math.ceil(love.graphics.getWidth() / menu.tileSize)
 menu.chromaSpeed = 0.1
+menu.coustomShown = false
+menu.startShown = true
 
 menu.colors = {
-    HSV(math.random(), math.random() + 0.5, 1), 
-    HSV(math.random(), math.random() + 0.5, 1), 
-    HSV(math.random(), math.random() + 0.5, 1), 
-    HSV(math.random(), math.random() + 0.5, 1) 
+    newColor(1,0,1), 
+    newColor(1,0.3,1),
+    newColor(1,0.4,0.1), 
+    newColor(1,1,0.1)
 }
--- menu.colors.topLeft = HSV(math.random(), math.random() + 0.5, 1)
--- menu.colors.topRight = HSV(math.random(), math.random() + 0.5, 1)
--- menu.colors.bottomLeft = HSV(math.random(), math.random() + 0.5, 1)
--- menu.colors.bottomRight = HSV(math.random(), math.random() + 0.5, 1)
-
 
 function menu.drawMenu()
     for y = 0, menu.tileHight-1 do
@@ -38,30 +35,43 @@ function menu.drawMenu()
             drawTile(x,y,color)
         end
     end
+    if not menu.coustomShown then
+        love.graphics.setColor(0,0,0,menu.titleFade / menu.titleFadeTime)
+        love.graphics.setFont(menu.titleFont)
+        love.graphics.printf("Hue", 0, love.graphics.getHeight()/3, love.graphics.getWidth(), "center")
 
-    -- love.graphics.setColor(background.R, background.G, background.B, )
-    -- love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+        love.graphics.setFont(font)
+        love.graphics.printf("Press any button to start.", 0, love.graphics.getHeight()/3*2, love.graphics.getWidth(), "center")
+        love.graphics.printf("Press + to quit", 0, love.graphics.getHeight()/3*2 + menu.margin+font:getHeight(), love.graphics.getWidth(), "center")
 
-    love.graphics.setColor(0,0,0,menu.titleFade / menu.titleFadeTime)
-    love.graphics.setFont(menu.titleFont)
-    love.graphics.printf("Hue", 0, love.graphics.getHeight()/3, love.graphics.getWidth(), "center")
+        love.graphics.setFont(smallFont)
+        love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
+    else
+        love.graphics.setColor(0,0,0,1)
+        love.graphics.printf("Coustom level", 5, 5, love.graphics.getWidth())
 
-    love.graphics.setFont(font)
-    love.graphics.printf("Press any button to start.", 0, love.graphics.getHeight()/3*2, love.graphics.getWidth(), "center")
+        spacing = 20
 
-    love.graphics.setFont(smallFont)
-    love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
+        love.graphics.printf("Width: " .. level.width, 0, (love.graphics.getHeight()/3) + font:getHeight(), love.graphics.getWidth(), "center")
+        love.graphics.printf("Height: " .. level.height, 0, (love.graphics.getHeight()/3) + spacing * 2 + font:getHeight(), love.graphics.getWidth(), "center")
+        love.graphics.printf("Locked tiles: " .. level.lockedAmmount, 0, (love.graphics.getHeight()/3) + spacing*4 + font:getHeight(), love.graphics.getWidth(), "center")
+        love.graphics.printf("Play", 0, (love.graphics.getHeight()/3) + spacing*6 + font:getHeight(), love.graphics.getWidth(), "center")
+        love.graphics.printf("Back", 0, (love.graphics.getHeight()/3) + spacing*8 + font:getHeight(), love.graphics.getWidth(), "center")
 
+        love.graphics.setFont(smallFont)
+        love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
+        love.graphics.setFont(font)
+
+        --slector
+        love.graphics.circle("line", love.graphics.getWidth() / 2 - 100, (love.graphics.getHeight()/3) + font:getHeight() + spacing * 2 * menu.selected + font:getHeight()/2, 5)
+    
+    end
 end
 
 function menu.upadeMenu(dt)
-    for i = 1, #menu.colors do
         
+    print(dump(menu.colors))
 
-        menu.colors[i].R = menu.colors[i].R + 1
-        menu.colors[i].R = menu.colors[i].R + 1
-
-    end
 
     menu.titleFade = menu.titleFade + dt
     if menu.titleFade > menu.titleFadeTime then

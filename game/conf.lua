@@ -1,3 +1,4 @@
-function love.conf(t) 
-    t.console = true 
+function love.conf(t)
+    -- Example configuration
+    t.console = true
 end
