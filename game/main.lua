@@ -1,4 +1,8 @@
 function love.load()
+
+    -- love.window.setMode( 1920, 1080 )
+
+
     require("utils")
     require("console")
     require("menu")
@@ -88,7 +92,48 @@ function love.touchpressed( id, x, y, dx, dy, pressure )
     if menu.displayed then
         if menu.startShown then
             menu.startShown = false
-            menu.coustomShown= true
+            menu.levelSelectShown = true
+        elseif menu.levelSelectShown then
+            for i = 1, #menu.levelSelectButtons do
+                local button = menu.levelSelectButtons[i]
+
+                if x > button.x - button.width/2 and x < button.x + button.width/2 and y > button.y - button.height/2 and y < button.y + button.height/2 then
+                    if button.text == "Custom" then
+                        menu.levelSelectShown = false
+                        menu.customShown = true
+                    elseif button.text == "Easy" then
+                        level.width = 9
+                        level.height = 5
+
+                        level.lockedAmmount = 25
+                        
+                        initLevel()
+
+                        level.displayed = true  
+                        menu.displayed = false
+                    elseif button.text == "Medium" then
+                        level.width = 9
+                        level.height = 5
+
+                        level.lockedAmmount = 15
+
+                        initLevel()
+
+                        level.displayed = true
+                        menu.displayed = false
+                    elseif button.text == "Hard" then
+                        level.width = 11
+                        level.height = 7
+
+                        level.lockedAmmount = 15
+
+                        initLevel()
+
+                        level.displayed = true
+                        menu.displayed = false
+                    end
+                end
+            end
         end
     elseif level.displayed then
 
@@ -267,9 +312,9 @@ function love.gamepadpressed(joystick, button)
                 love.event.quit()
             else
                 menu.startShown = false
-                menu.coustomShown= true
+                menu.levelSelectShown= true
             end
-        else
+        elseif menu.customShown then
             if button == "dpup" and menu.selected > 0 then
                 menu.selected = menu.selected - 1
             elseif button == "dpdown" and menu.selected < menu.highest then
@@ -287,15 +332,15 @@ function love.gamepadpressed(joystick, button)
 
                     initLevel()
                 elseif menu.selected == 4 then
-                    menu.coustomShown = false
+                    menu.customShown = false
                     menu.startShown = true
                 end
             elseif button == "dpleft" or button == "b" then
-                if menu.selected == 0 then
+                if menu.selected == 0 and level.width > 2 then
                     level.width = level.width - 1
-                elseif menu.selected == 1 then
+                elseif menu.selected == 1 and level.height > 2 then
                     level.height = level.height - 1
-                elseif menu.selected == 2 then
+                elseif menu.selected == 2 and level.lockedAmmount > 0 then
                     level.lockedAmmount = level.lockedAmmount - 1
                 elseif menu.selected == 3 then
                     level.displayed = true
@@ -303,7 +348,7 @@ function love.gamepadpressed(joystick, button)
 
                     initLevel()
                 elseif menu.selected == 4 then
-                    menu.coustomShown = false
+                    menu.customShown = false
                     menu.startShown = true
                 end
             end
@@ -313,6 +358,9 @@ function love.gamepadpressed(joystick, button)
     if button == "start" then
         level.displayed = false
         menu.displayed = true
+        menu.startShown = true
+        menu.levelSelectSown = false
+        menu.customShown = false
     end
     if button == "back" then
         console.enabled = not console.enabled

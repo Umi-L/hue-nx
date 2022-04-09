@@ -10,8 +10,51 @@ menu.tileHight = 5
 menu.tileSize = love.graphics.getHeight() / menu.tileHight
 menu.tileWidth = math.ceil(love.graphics.getWidth() / menu.tileSize)
 menu.chromaSpeed = 0.1
-menu.coustomShown = false
+menu.customShown = false
 menu.startShown = true
+menu.levelSelectShown = false
+menu.buttonColor = newColor(76/255, 68/255, 81/255)
+menu.levelSelectButtons = {
+    {
+        x=love.graphics.getWidth()/8, 
+        y=love.graphics.getHeight()/5*4, 
+        width=love.graphics.getWidth()/5, 
+        height=love.graphics.getHeight()/7,
+        rounding = 2,
+        color = menu.buttonColor,
+        text="Easy"
+    },
+
+    {
+        x=love.graphics.getWidth()/8*3, 
+        y=love.graphics.getHeight()/5*4, 
+        width=love.graphics.getWidth()/5, 
+        height=love.graphics.getHeight()/7,
+        rounding = 2,
+        color = menu.buttonColor,
+        text="Medium"
+    },
+
+    {
+        x=love.graphics.getWidth()/8*5, 
+        y=love.graphics.getHeight()/5*4, 
+        width=love.graphics.getWidth()/5, 
+        height=love.graphics.getHeight()/7,
+        rounding = 2,
+        color = menu.buttonColor,
+        text="Hard"
+    },
+
+    {
+        x=love.graphics.getWidth()/8*7, 
+        y=love.graphics.getHeight()/5*4, 
+        width=love.graphics.getWidth()/5, 
+        height=love.graphics.getHeight()/7,
+        rounding = 2,
+        color = menu.buttonColor,
+        text="Custom"
+    },
+}
 
 menu.colors = {
     newColor(1,0,1), 
@@ -35,7 +78,7 @@ function menu.drawMenu()
             drawTile(x,y,color)
         end
     end
-    if not menu.coustomShown then
+    if menu.startShown then
         love.graphics.setColor(0,0,0,menu.titleFade / menu.titleFadeTime)
         love.graphics.setFont(menu.titleFont)
         love.graphics.printf("Hue", 0, love.graphics.getHeight()/3, love.graphics.getWidth(), "center")
@@ -46,7 +89,7 @@ function menu.drawMenu()
 
         love.graphics.setFont(smallFont)
         love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
-    else
+    elseif menu.customShown then
         love.graphics.setColor(0,0,0,1)
         love.graphics.printf("Coustom level", 5, 5, love.graphics.getWidth())
 
@@ -65,14 +108,30 @@ function menu.drawMenu()
         --slector
         love.graphics.circle("line", love.graphics.getWidth() / 2 - 100, (love.graphics.getHeight()/3) + font:getHeight() + spacing * 2 * menu.selected + font:getHeight()/2, 5)
     
+    elseif menu.levelSelectShown then
+        love.graphics.setFont(menu.titleFont)
+        love.graphics.setColor(0,0,0,1)
+        love.graphics.printf("New Game", 0, love.graphics.getHeight()/4, love.graphics.getWidth(), "center")
+
+        love.graphics.setFont(smallFont)
+        love.graphics.print("press + to return to the menu, and press - re-genorate the level.", menu.margin, love.graphics.getHeight() - menu.margin - smallFont:getHeight())
+        love.graphics.setFont(font)
+
+        for i = 1, #menu.levelSelectButtons do
+            local button = menu.levelSelectButtons[i]
+            local c = button.color
+
+            love.graphics.setColor(c.R, c.G, c.B)
+            love.graphics.rectangle("fill", button.x - button.width/2, button.y - button.height/2,  button.width, button.height, button.rounding, button.rounding)
+
+            love.graphics.setFont(font)
+            love.graphics.setColor(1,1,1,1)
+            love.graphics.printf(button.text, button.x - button.width/2, button.y - font:getHeight()/2, button.width, "center")
+        end
     end
 end
 
 function menu.upadeMenu(dt)
-        
-    print(dump(menu.colors))
-
-
     menu.titleFade = menu.titleFade + dt
     if menu.titleFade > menu.titleFadeTime then
         menu.titleFade = menu.titleFadeTime
